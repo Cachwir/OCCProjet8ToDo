@@ -19,6 +19,8 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
  */
 class UserControllerTest extends WebTestCase
 {
+    protected $username = "Test_Functionnal_User";
+
     public function testList()
     {
         $client = static::createClient();
@@ -39,7 +41,7 @@ class UserControllerTest extends WebTestCase
         $this->assertCount(1, $crawler->filter("form"));
     }
 
-    public function testShouldSaveNewUser()
+    public function testShouldSaveNewUser(User $user = null)
     {
         $client = static::createClient();
 
@@ -47,14 +49,18 @@ class UserControllerTest extends WebTestCase
             ->get('security.csrf.token_manager')
             ->getToken('user');
 
-        $username =  "Test_". uniqid();
+        if ($user === null) {
+            $action = "users/create";
+        } else {
+            $action = "users/". $user->getId() ."/edit";
+        }
 
-        $crawler = $client->request('POST', 'users/create', [
+        $crawler = $client->request('POST', $action, [
             'user' => [
-                'username' => $username,
+                'username' => $this->username,
                 'password' => [
-                    'first' => 'password',
-                    'second' => 'password',
+                    'first' => 'password2',
+                    'second' => 'password2',
                 ],
                 'email' => "test_". uniqid() . "@gmx.com",
                 '_token' => $csrfToken,
@@ -66,6 +72,19 @@ class UserControllerTest extends WebTestCase
         $crawler = $client->followRedirect();
 
         $this->assertEquals(200, $client->getResponse()->getStatusCode());
-        $this->assertRegExp("~$username~", $crawler->filter("tbody tr:last-child")->text());
+        $this->assertRegExp("~$this->username~", $crawler->filter("tbody tr:last-child")->text());
+    }
+
+    public function testShouldEditUser()
+    {
+        $client = static::createClient();
+
+        $user = $client->getContainer()->get("doctrine.orm.entity_manager")->getRepository("AppBundle:User")->findOneBy(["username" => $this->username]);
+
+        if (!$user instanceof User) {
+            throw new \Error("The user ". $this->username . " cannot be edited as it doesn't exist in the database.");
+        }
+
+        $this->testShouldSaveNewUser($user);
     }
 }
