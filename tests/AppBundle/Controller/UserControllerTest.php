@@ -75,6 +75,22 @@ class UserControllerTest extends WebTestCase
         $this->assertRegExp("~$this->username~", $crawler->filter("tbody tr:last-child")->text());
     }
 
+    public function testEdit()
+    {
+        $client = static::createClient();
+
+        $user = $client->getContainer()->get("doctrine.orm.entity_manager")->getRepository("AppBundle:User")->findOneBy(["username" => $this->username]);
+
+        if (!$user instanceof User) {
+            throw new \Error("The user ". $this->username . " cannot be edited as it doesn't exist in the database.");
+        }
+
+        $crawler = $client->request('GET', 'users/'. $user->getId() .'/edit');
+
+        $this->assertEquals(200, $client->getResponse()->getStatusCode());
+        $this->assertCount(1, $crawler->filter("form"));
+    }
+
     public function testShouldEditUser()
     {
         $client = static::createClient();
