@@ -8,6 +8,12 @@ framework:
     profiler:
         collect: false
 
+security:
+    firewalls:
+        # replace 'main' by the name of your own firewall
+        main:
+            http_basic: ~
+
 web_profiler:
     toolbar: false
     intercept_redirects: false
