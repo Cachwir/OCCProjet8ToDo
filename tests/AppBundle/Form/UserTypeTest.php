@@ -22,6 +22,7 @@ class UserTypeTest extends TypeTestCase
                 "second" => "password",
             ],
             'email' => "unit-test-". uniqid() . "@gmx.com",
+            'role' => "ROLE_ADMIN",
         );
 
         $form = $this->factory->create(UserType::class);
@@ -30,6 +31,7 @@ class UserTypeTest extends TypeTestCase
         $user->setUsername($formData["username"]);
         $user->setPassword("password");
         $user->setEmail($formData["email"]);
+        $user->setRole($formData["role"]);
 
         // submit the data to the form directly
         $form->submit($formData);

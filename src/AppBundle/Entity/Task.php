@@ -36,6 +36,12 @@ class Task
     private $content;
 
     /**
+     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\User")
+     * @ORM\JoinColumn(onDelete="RESTRICT")
+     */
+    protected $author;
+
+    /**
      * @ORM\Column(type="boolean")
      */
     private $isDone;
@@ -89,5 +95,21 @@ class Task
     public function toggle($flag)
     {
         $this->isDone = $flag;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getAuthor()
+    {
+        return $this->author;
+    }
+
+    /**
+     * @param mixed $author
+     */
+    public function setAuthor($author)
+    {
+        $this->author = $author;
     }
 }

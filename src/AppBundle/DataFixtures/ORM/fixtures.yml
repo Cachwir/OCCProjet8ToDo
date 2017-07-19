@@ -1,14 +1,17 @@
 AppBundle\Entity\User:
   test_user:
+    id: 1
     username: test
     password: $2y$13$c9McUAaB1Vj11LT7bMtFJuZHUQEooQzF2w/cMxoAcZ0zxNTju1sSS
     email: functionnal.test.cachwir@gmx.com
+    role: ROLE_ADMIN
   user_{1..5}:
     username: <username()>
     password: $2y$13$c9McUAaB1Vj11LT7bMtFJuZHUQEooQzF2w/cMxoAcZ0zxNTju1sSS
     email: <email()>
+    role: ROLE_USER
 
 AppBundle\Entity\Task:
   task_{1..5}:
-    title: <text(100)>
+    title: <text(20)>
     content: <text(1000)>

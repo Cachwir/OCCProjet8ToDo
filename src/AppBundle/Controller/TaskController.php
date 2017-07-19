@@ -25,10 +25,11 @@ class TaskController extends Controller
      */
     public function createAction(Request $request)
     {
+        $user = $this->getUser();
         $task = new Task();
         $form = $this->createForm(TaskType::class, $task);
 
-        $formHandler = new TaskFormHandler($this->get("router"), $this->get("doctrine.orm.entity_manager"));
+        $formHandler = new TaskFormHandler($this->get("router"), $this->get("doctrine.orm.entity_manager"), $user);
         $response = $formHandler->handle($form, $request);
 
         if ($response instanceof RedirectResponse) {
@@ -44,9 +45,10 @@ class TaskController extends Controller
      */
     public function editAction(Task $task, Request $request)
     {
+        $user = $this->getUser();
         $form = $this->createForm(TaskType::class, $task);
 
-        $formHandler = new TaskFormHandler($this->get("router"), $this->get("doctrine.orm.entity_manager"));
+        $formHandler = new TaskFormHandler($this->get("router"), $this->get("doctrine.orm.entity_manager"), $user);
         $response = $formHandler->handle($form, $request);
 
         if ($response instanceof RedirectResponse) {

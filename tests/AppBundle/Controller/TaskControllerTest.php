@@ -20,6 +20,7 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 class TaskControllerTest extends WebTestCase
 {
     protected $title = "Test_Functionnal_Task";
+    protected $author_id = 1;
 
     public function testList()
     {
@@ -68,7 +69,7 @@ class TaskControllerTest extends WebTestCase
             'task' => [
                 'title' => $this->title,
                 'content' => "This is a test task. Don't mind it.",
-                '_token' => $csrfToken
+                '_token' => $csrfToken,
             ]
         ]);
 

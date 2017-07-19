@@ -3,6 +3,7 @@
 namespace Tests\AppBundle\Form\Handler;
 
 use AppBundle\Entity\Task;
+use AppBundle\Entity\User;
 use AppBundle\Form\Handler\TaskFormHandler;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
@@ -37,7 +38,7 @@ class TaskFormHandlerTest extends TestCase
         $this->em = $this->getMockBuilder('Doctrine\ORM\EntityManager')
             ->disableOriginalConstructor()
             ->getMock();
-        $this->handler = new TaskFormHandler($this->router, $this->em);
+        $this->handler = new TaskFormHandler($this->router, $this->em, new User());
     }
 
     public function testShouldHandleAnUnsuccessfulFormSubmission()

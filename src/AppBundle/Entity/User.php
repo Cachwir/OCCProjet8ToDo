@@ -40,6 +40,20 @@ class User implements UserInterface
      */
     private $email;
 
+    /**
+     * @ORM\Column(type="string", length=20)
+     * @Assert\NotBlank(message="Vous devez saisir un rôle.")
+     */
+    private $role;
+
+    const ROLE_USER  = "ROLE_USER";
+    const ROLE_ADMIN = "ROLE_ADMIN";
+
+    public static $availableRoles = [
+        self::ROLE_USER 	=> 'Utilisateur',
+        self::ROLE_ADMIN 	=> 'Administrateur',
+    ];
+
     public function getId()
     {
         return $this->id;
@@ -80,12 +94,33 @@ class User implements UserInterface
         $this->email = $email;
     }
 
+    /**
+     * @return mixed
+     */
+    public function getRole()
+    {
+        return $this->role;
+    }
+
+    /**
+     * @param mixed $role
+     */
+    public function setRole($role)
+    {
+        $this->role = $role;
+    }
+
     public function getRoles()
     {
-        return array('ROLE_USER');
+        return array($this->getRole());
     }
 
     public function eraseCredentials()
     {
+    }
+
+    public static function getAvailableRoles()
+    {
+        return self::$availableRoles;
     }
 }
