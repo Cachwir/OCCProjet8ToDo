@@ -70,11 +70,12 @@ class UserControllerTest extends WebTestCase
                     'second' => 'password2',
                 ],
                 'email' => "test_". uniqid() . "@gmx.com",
+                'role' => User::ROLE_USER,
                 '_token' => $csrfToken,
             ]
         ]);
 
-        $this->assertEquals(302, $client->getResponse()->getStatusCode());
+        $this->assertEquals(302, $client->getResponse()->getStatusCode(), $client->getResponse()->getContent());
 
         $crawler = $client->followRedirect();
 
