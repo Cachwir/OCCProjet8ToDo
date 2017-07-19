@@ -3,10 +3,14 @@
 namespace AppBundle\Controller;
 
 use AppBundle\Entity\User;
+use AppBundle\Form\Handler\UserFormHandler;
 use AppBundle\Form\UserType;
+use Doctrine\ORM\EntityManagerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class UserController extends Controller
 {
@@ -26,19 +30,12 @@ class UserController extends Controller
         $user = new User();
         $form = $this->createForm(UserType::class, $user);
 
-        $form->handleRequest($request);
+        $formHandler = new UserFormHandler($this->get("router"), $this->get("doctrine.orm.entity_manager"), $this->get("security.password_encoder"));
+        $response = $formHandler->handle($form, $request);
 
-        if ($form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-            $password = $this->get('security.password_encoder')->encodePassword($user, $user->getPassword());
-            $user->setPassword($password);
-
-            $em->persist($user);
-            $em->flush();
-
+        if ($response instanceof RedirectResponse) {
             $this->addFlash('success', "L'utilisateur a bien été ajouté.");
-
-            return $this->redirectToRoute('user_list');
+            return $response;
         }
 
         return $this->render('user/create.html.twig', ['form' => $form->createView()]);
@@ -51,17 +48,12 @@ class UserController extends Controller
     {
         $form = $this->createForm(UserType::class, $user);
 
-        $form->handleRequest($request);
+        $formHandler = new UserFormHandler($this->get("router"), $this->get("doctrine.orm.entity_manager"), $this->get("security.password_encoder"));
+        $response = $formHandler->handle($form, $request);
 
-        if ($form->isValid()) {
-            $password = $this->get('security.password_encoder')->encodePassword($user, $user->getPassword());
-            $user->setPassword($password);
-
-            $this->getDoctrine()->getManager()->flush();
-
-            $this->addFlash('success', "L'utilisateur a bien été modifié");
-
-            return $this->redirectToRoute('user_list');
+        if ($response instanceof RedirectResponse) {
+            $this->addFlash('success', "L'utilisateur a bien été modifié.");
+            return $response;
         }
 
         return $this->render('user/edit.html.twig', ['form' => $form->createView(), 'user' => $user]);

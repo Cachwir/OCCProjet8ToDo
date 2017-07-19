@@ -3,9 +3,11 @@
 namespace AppBundle\Controller;
 
 use AppBundle\Entity\Task;
+use AppBundle\Form\Handler\TaskFormHandler;
 use AppBundle\Form\TaskType;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 class TaskController extends Controller
@@ -26,17 +28,12 @@ class TaskController extends Controller
         $task = new Task();
         $form = $this->createForm(TaskType::class, $task);
 
-        $form->handleRequest($request);
+        $formHandler = new TaskFormHandler($this->get("router"), $this->get("doctrine.orm.entity_manager"));
+        $response = $formHandler->handle($form, $request);
 
-        if ($form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-
-            $em->persist($task);
-            $em->flush();
-
-            $this->addFlash('success', 'La tâche a été bien été ajoutée.');
-
-            return $this->redirectToRoute('task_list');
+        if ($response instanceof RedirectResponse) {
+            $this->addFlash('success', "La tâche a bien été ajouté.");
+            return $response;
         }
 
         return $this->render('task/create.html.twig', ['form' => $form->createView()]);
@@ -49,14 +46,12 @@ class TaskController extends Controller
     {
         $form = $this->createForm(TaskType::class, $task);
 
-        $form->handleRequest($request);
+        $formHandler = new TaskFormHandler($this->get("router"), $this->get("doctrine.orm.entity_manager"));
+        $response = $formHandler->handle($form, $request);
 
-        if ($form->isValid()) {
-            $this->getDoctrine()->getManager()->flush();
-
-            $this->addFlash('success', 'La tâche a bien été modifiée.');
-
-            return $this->redirectToRoute('task_list');
+        if ($response instanceof RedirectResponse) {
+            $this->addFlash('success', "La tâche a bien été modifiée.");
+            return $response;
         }
 
         return $this->render('task/edit.html.twig', [
