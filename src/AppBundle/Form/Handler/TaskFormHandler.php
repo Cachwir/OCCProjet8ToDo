@@ -8,6 +8,7 @@
 
 namespace AppBundle\Form\Handler;
 
+use AppBundle\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -24,11 +25,16 @@ class TaskFormHandler
      * @var EntityManagerInterface
      */
     private $em;
+    /**
+     * @var User
+     */
+    private $user;
 
-    public function __construct(RouterInterface $router, EntityManagerInterface $em)
+    public function __construct(RouterInterface $router, EntityManagerInterface $em, User $user)
     {
         $this->router = $router;
         $this->em = $em;
+        $this->user = $user;
     }
 
     public function handle(FormInterface $form, Request $request)
@@ -36,7 +42,12 @@ class TaskFormHandler
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->em->persist($form->getData());
+            $task = $form->getData();
+            if ($task->getId() === null) {
+                $task->setAuthor($this->user);
+            }
+
+            $this->em->persist($task);
             $this->em->flush();
 
             return new RedirectResponse($this->router->generate('task_list'));
