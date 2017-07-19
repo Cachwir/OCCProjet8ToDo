@@ -14,7 +14,7 @@
 
     <testsuites>
         <testsuite name="Project Test Suite">
-            <directory>tests/AppBundle/Controller</directory>
+            <directory>tests/AppBundle</directory>
         </testsuite>
     </testsuites>
 

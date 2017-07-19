@@ -19,7 +19,14 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
  */
 class UserControllerTest extends WebTestCase
 {
-    protected $username = "Test_Functionnal_User";
+    protected static $username;
+
+    public function setUp()
+    {
+        if (self::$username === null) {
+            self::$username = "Test_Functionnal_User_". uniqid();
+        }
+    }
 
     public function testList()
     {
@@ -57,7 +64,7 @@ class UserControllerTest extends WebTestCase
 
         $crawler = $client->request('POST', $action, [
             'user' => [
-                'username' => $this->username,
+                'username' => self::$username,
                 'password' => [
                     'first' => 'password2',
                     'second' => 'password2',
@@ -67,22 +74,22 @@ class UserControllerTest extends WebTestCase
             ]
         ]);
 
-        $this->assertEquals(302, $client->getResponse()->getStatusCode(), $client->getResponse()->getContent());
+        $this->assertEquals(302, $client->getResponse()->getStatusCode());
 
         $crawler = $client->followRedirect();
 
         $this->assertEquals(200, $client->getResponse()->getStatusCode());
-        $this->assertRegExp("~$this->username~", $crawler->filter("tbody tr:last-child")->text());
+        $this->assertRegExp("~". self::$username. "~", $crawler->filter("tbody tr:last-child")->text());
     }
 
     public function testEdit()
     {
         $client = static::createClient();
 
-        $user = $client->getContainer()->get("doctrine.orm.entity_manager")->getRepository("AppBundle:User")->findOneBy(["username" => $this->username]);
+        $user = $client->getContainer()->get("doctrine.orm.entity_manager")->getRepository("AppBundle:User")->findOneBy(["username" => self::$username]);
 
         if (!$user instanceof User) {
-            throw new \Error("The user ". $this->username . " cannot be edited as it doesn't exist in the database.");
+            throw new \Error("The user ". self::$username . " cannot be edited as it doesn't exist in the database.");
         }
 
         $crawler = $client->request('GET', 'users/'. $user->getId() .'/edit');
@@ -95,10 +102,10 @@ class UserControllerTest extends WebTestCase
     {
         $client = static::createClient();
 
-        $user = $client->getContainer()->get("doctrine.orm.entity_manager")->getRepository("AppBundle:User")->findOneBy(["username" => $this->username]);
+        $user = $client->getContainer()->get("doctrine.orm.entity_manager")->getRepository("AppBundle:User")->findOneBy(["username" => self::$username]);
 
         if (!$user instanceof User) {
-            throw new \Error("The user ". $this->username . " cannot be edited as it doesn't exist in the database.");
+            throw new \Error("The user ". self::$username . " cannot be edited as it doesn't exist in the database.");
         }
 
         $this->testShouldSaveNewUser($user);
