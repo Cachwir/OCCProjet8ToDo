@@ -19,7 +19,8 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
  */
 class SecurityControllerTest extends WebTestCase
 {
-    protected $username = "test";
+    protected $admin_username = "test_admin";
+    protected $user_username = "test_user";
     protected $password = "password";
 
     public function testLogin()
@@ -37,7 +38,7 @@ class SecurityControllerTest extends WebTestCase
         $client = static::createClient();
 
         $crawler = $client->request('POST', 'login_check', [
-            '_username' => $this->username,
+            '_username' => $this->admin_username,
             '_password' => $this->password,
         ]);
 
@@ -50,5 +51,26 @@ class SecurityControllerTest extends WebTestCase
             $client->getContainer()->get("router")->generate("login", [], Router::ABSOLUTE_URL),
             $client->getRequest()->getUri(),
             $crawler->filter(".alert")->count() > 0 ? $crawler->filter(".alert")->text() : $client->getResponse()->getContent());
+    }
+
+    public function testShouldntAccessUserProtectedPage()
+    {
+        $client = static::createClient();
+
+        $crawler = $client->request('GET', 'tasks');
+
+        $this->assertEquals(302, $client->getResponse()->getStatusCode());
+    }
+
+    public function testShouldntAccessAdminProtectedPage()
+    {
+        $client = static::createClient(array(), array(
+            'PHP_AUTH_USER' => $this->user_username,
+            'PHP_AUTH_PW'   => $this->password,
+        ));
+
+        $crawler = $client->request('GET', 'users');
+
+        $this->assertEquals(403, $client->getResponse()->getStatusCode());
     }
 }
