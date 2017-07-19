@@ -9,6 +9,7 @@
 namespace AppBundle\Tests\Controller;
 
 use AppBundle\Entity\User;
+use Symfony\Bundle\FrameworkBundle\Client;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
@@ -21,38 +22,45 @@ class UserControllerTest extends WebTestCase
 {
     protected static $username;
 
+    protected $admin_username = "test_admin";
+    protected $password = "password";
+
+    /**
+     * @var Client $client
+     */
+    protected $client;
+
     public function setUp()
     {
         if (self::$username === null) {
             self::$username = "Test_Functionnal_User_". uniqid();
         }
+
+        $this->client = static::createClient(array(), array(
+            'PHP_AUTH_USER' => $this->admin_username,
+            'PHP_AUTH_PW'   => $this->password,
+        ));
     }
 
     public function testList()
     {
-        $client = static::createClient();
+        $crawler = $this->client->request('GET', 'users');
 
-        $crawler = $client->request('GET', 'users');
-
-        $this->assertEquals(200, $client->getResponse()->getStatusCode());
+        $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
         $this->assertGreaterThan(0, $crawler->filter("tbody tr")->count());
     }
 
     public function testAdd()
     {
-        $client = static::createClient();
+        $crawler = $this->client->request('GET', 'users/create');
 
-        $crawler = $client->request('GET', 'users/create');
-
-        $this->assertEquals(200, $client->getResponse()->getStatusCode());
+        $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
         $this->assertCount(1, $crawler->filter("form"));
     }
 
     public function testShouldSaveNewUser(User $user = null)
     {
-        $client = static::createClient();
-
-        $csrfToken = $client->getContainer()
+        $csrfToken = $this->client->getContainer()
             ->get('security.csrf.token_manager')
             ->getToken('user');
 
@@ -62,7 +70,7 @@ class UserControllerTest extends WebTestCase
             $action = "users/". $user->getId() ."/edit";
         }
 
-        $crawler = $client->request('POST', $action, [
+        $crawler = $this->client->request('POST', $action, [
             'user' => [
                 'username' => self::$username,
                 'password' => [
@@ -75,35 +83,31 @@ class UserControllerTest extends WebTestCase
             ]
         ]);
 
-        $this->assertEquals(302, $client->getResponse()->getStatusCode(), $client->getResponse()->getContent());
+        $this->assertEquals(302, $this->client->getResponse()->getStatusCode(), $this->client->getResponse()->getContent());
 
-        $crawler = $client->followRedirect();
+        $crawler = $this->client->followRedirect();
 
-        $this->assertEquals(200, $client->getResponse()->getStatusCode());
+        $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
         $this->assertRegExp("~". self::$username. "~", $crawler->filter("tbody tr:last-child")->text());
     }
 
     public function testEdit()
     {
-        $client = static::createClient();
-
-        $user = $client->getContainer()->get("doctrine.orm.entity_manager")->getRepository("AppBundle:User")->findOneBy(["username" => self::$username]);
+        $user = $this->client->getContainer()->get("doctrine.orm.entity_manager")->getRepository("AppBundle:User")->findOneBy(["username" => self::$username]);
 
         if (!$user instanceof User) {
             throw new \Error("The user ". self::$username . " cannot be edited as it doesn't exist in the database.");
         }
 
-        $crawler = $client->request('GET', 'users/'. $user->getId() .'/edit');
+        $crawler = $this->client->request('GET', 'users/'. $user->getId() .'/edit');
 
-        $this->assertEquals(200, $client->getResponse()->getStatusCode());
+        $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
         $this->assertCount(1, $crawler->filter("form"));
     }
 
     public function testShouldEditUser()
     {
-        $client = static::createClient();
-
-        $user = $client->getContainer()->get("doctrine.orm.entity_manager")->getRepository("AppBundle:User")->findOneBy(["username" => self::$username]);
+        $user = $this->client->getContainer()->get("doctrine.orm.entity_manager")->getRepository("AppBundle:User")->findOneBy(["username" => self::$username]);
 
         if (!$user instanceof User) {
             throw new \Error("The user ". self::$username . " cannot be edited as it doesn't exist in the database.");

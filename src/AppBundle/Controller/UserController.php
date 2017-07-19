@@ -7,6 +7,7 @@ use AppBundle\Form\Handler\UserFormHandler;
 use AppBundle\Form\UserType;
 use Doctrine\ORM\EntityManagerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,6 +17,7 @@ class UserController extends Controller
 {
     /**
      * @Route("/users", name="user_list")
+     * @Security("is_granted('ROLE_ADMIN')")
      */
     public function listAction()
     {
@@ -24,6 +26,7 @@ class UserController extends Controller
 
     /**
      * @Route("/users/create", name="user_create")
+     * @Security("is_granted('ROLE_ADMIN')")
      */
     public function createAction(Request $request)
     {
@@ -43,6 +46,7 @@ class UserController extends Controller
 
     /**
      * @Route("/users/{id}/edit", name="user_edit")
+     * @Security("is_granted('ROLE_ADMIN')")
      */
     public function editAction(User $user, Request $request)
     {

@@ -9,6 +9,7 @@
 namespace AppBundle\Tests\Controller;
 
 use AppBundle\Entity\Task;
+use Symfony\Bundle\FrameworkBundle\Client;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
@@ -22,40 +23,41 @@ class TaskControllerTest extends WebTestCase
     protected $title = "Test_Functionnal_Task";
     protected $author_id = 1;
 
+    protected $user_username = "test_user";
+    protected $password = "password";
+
+    /**
+     * @var Client $client
+     */
+    protected $client;
+
+    public function setUp()
+    {
+        $this->client = static::createClient(array(), array(
+            'PHP_AUTH_USER' => $this->user_username,
+            'PHP_AUTH_PW'   => $this->password,
+        ));
+    }
+
     public function testList()
     {
-        $client = static::createClient(array(), array(
-            'PHP_AUTH_USER' => 'test',
-            'PHP_AUTH_PW'   => 'password',
-        ));
+        $crawler = $this->client->request('GET', 'tasks');
 
-        $crawler = $client->request('GET', 'tasks');
-
-        $this->assertEquals(200, $client->getResponse()->getStatusCode());
+        $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
         $this->assertGreaterThan(0, $crawler->filter(".task")->count());
     }
 
     public function testAdd()
     {
-        $client = static::createClient(array(), array(
-            'PHP_AUTH_USER' => 'test',
-            'PHP_AUTH_PW'   => 'password',
-        ));
+        $crawler = $this->client->request('GET', 'tasks/create');
 
-        $crawler = $client->request('GET', 'tasks/create');
-
-        $this->assertEquals(200, $client->getResponse()->getStatusCode());
+        $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
         $this->assertCount(1, $crawler->filter("form"));
     }
 
     public function testShouldSaveNewTask(Task $task = null)
     {
-        $client = static::createClient(array(), array(
-            'PHP_AUTH_USER' => 'test',
-            'PHP_AUTH_PW'   => 'password',
-        ));
-
-        $csrfToken = $client->getContainer()
+        $csrfToken = $this->client->getContainer()
             ->get('security.csrf.token_manager')
             ->getToken('task');
 
@@ -65,7 +67,7 @@ class TaskControllerTest extends WebTestCase
             $action = "tasks/" . $task->getId() . "/edit";
         }
 
-        $crawler = $client->request('POST', $action, [
+        $crawler = $this->client->request('POST', $action, [
             'task' => [
                 'title' => $this->title,
                 'content' => "This is a test task. Don't mind it.",
@@ -73,41 +75,31 @@ class TaskControllerTest extends WebTestCase
             ]
         ]);
 
-        $this->assertEquals(302, $client->getResponse()->getStatusCode(), $client->getResponse()->getContent());
+        $this->assertEquals(302, $this->client->getResponse()->getStatusCode(), $this->client->getResponse()->getContent());
 
-        $crawler = $client->followRedirect();
+        $crawler = $this->client->followRedirect();
 
-        $this->assertEquals(200, $client->getResponse()->getStatusCode());
+        $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
         $this->assertRegExp("~$this->title~", $crawler->filter(".task:last-child")->text());
     }
 
     public function testEdit()
     {
-        $client = static::createClient(array(), array(
-            'PHP_AUTH_USER' => 'test',
-            'PHP_AUTH_PW'   => 'password',
-        ));
-
-        $task = $client->getContainer()->get("doctrine.orm.entity_manager")->getRepository("AppBundle:Task")->findOneBy(["title" => $this->title]);
+        $task = $this->client->getContainer()->get("doctrine.orm.entity_manager")->getRepository("AppBundle:Task")->findOneBy(["title" => $this->title]);
 
         if (!$task instanceof Task) {
             throw new \Error("The task ". $this->title . " cannot be edited as it doesn't exist in the database.");
         }
 
-        $crawler = $client->request('GET', 'tasks/'. $task->getId() .'/edit');
+        $crawler = $this->client->request('GET', 'tasks/'. $task->getId() .'/edit');
 
-        $this->assertEquals(200, $client->getResponse()->getStatusCode());
+        $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
         $this->assertCount(1, $crawler->filter("form"));
     }
 
     public function testShouldEditTask()
     {
-        $client = static::createClient(array(), array(
-            'PHP_AUTH_USER' => 'test',
-            'PHP_AUTH_PW'   => 'password',
-        ));
-
-        $task = $client->getContainer()->get("doctrine.orm.entity_manager")->getRepository("AppBundle:Task")->findOneBy(["title" => $this->title]);
+        $task = $this->client->getContainer()->get("doctrine.orm.entity_manager")->getRepository("AppBundle:Task")->findOneBy(["title" => $this->title]);
 
         if (!$task instanceof Task) {
             throw new \Error("The task " . $this->title . " cannot be edited as it doesn't exist in the database.");
@@ -118,12 +110,7 @@ class TaskControllerTest extends WebTestCase
 
     public function testToggle()
     {
-        $client = static::createClient(array(), array(
-            'PHP_AUTH_USER' => 'test',
-            'PHP_AUTH_PW'   => 'password',
-        ));
-
-        $task = $client->getContainer()->get("doctrine.orm.entity_manager")->getRepository("AppBundle:Task")->findOneBy(["title" => $this->title]);
+        $task = $this->client->getContainer()->get("doctrine.orm.entity_manager")->getRepository("AppBundle:Task")->findOneBy(["title" => $this->title]);
 
         if (!$task instanceof Task) {
             throw new \Error("The task " . $this->title . " cannot be toggled as it doesn't exist in the database.");
@@ -131,32 +118,27 @@ class TaskControllerTest extends WebTestCase
 
         $old_is_done = $task->isDone();
 
-        $crawler = $client->request('GET', 'tasks/' . $task->getId() . '/toggle');
+        $crawler = $this->client->request('GET', 'tasks/' . $task->getId() . '/toggle');
 
-        $this->assertEquals(302, $client->getResponse()->getStatusCode());
+        $this->assertEquals(302, $this->client->getResponse()->getStatusCode());
         $this->assertNotEquals($task->isDone(), $old_is_done);
     }
 
     public function testDelete()
     {
-        $client = static::createClient(array(), array(
-            'PHP_AUTH_USER' => 'test',
-            'PHP_AUTH_PW'   => 'password',
-        ));
-
-        $task = $client->getContainer()->get("doctrine.orm.entity_manager")->getRepository("AppBundle:Task")->findOneBy(["title" => $this->title]);
+        $task = $this->client->getContainer()->get("doctrine.orm.entity_manager")->getRepository("AppBundle:Task")->findOneBy(["title" => $this->title]);
 
         if (!$task instanceof Task) {
             throw new \Error("The task " . $this->title . " cannot be toggled as it doesn't exist in the database.");
         }
 
-        $crawler = $client->request('GET', 'tasks/' . $task->getId() . '/delete');
+        $crawler = $this->client->request('GET', 'tasks/' . $task->getId() . '/delete');
 
-        $this->assertEquals(302, $client->getResponse()->getStatusCode(), $client->getResponse()->getContent());
+        $this->assertEquals(302, $this->client->getResponse()->getStatusCode(), $this->client->getResponse()->getContent());
 
-        $crawler = $client->followRedirect();
+        $crawler = $this->client->followRedirect();
 
-        $this->assertEquals(200, $client->getResponse()->getStatusCode());
+        $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
         $this->assertNull($task->getId());
     }
 }
