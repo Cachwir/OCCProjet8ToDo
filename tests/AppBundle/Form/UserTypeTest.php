@@ -3,15 +3,16 @@
 namespace AppBundle\Form;
 
 use AppBundle\Entity\User;
-use Symfony\Component\Form\Test\TypeTestCase;
+use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
  * Class UserTypeTest
- * @package AppBundle\Form
+ * Cannot extend the TypeTestCase as its form factory mock bugs with "invalid_message" form type option.
  *
+ * @package AppBundle\Form
  * @group unit
  */
-class UserTypeTest extends TypeTestCase
+class UserTypeTest extends WebTestCase
 {
     public function testSubmitValidData()
     {
@@ -25,7 +26,11 @@ class UserTypeTest extends TypeTestCase
             'role' => "ROLE_ADMIN",
         );
 
-        $form = $this->factory->create(UserType::class);
+        $client = static::createClient();
+
+        $factory = $client->getKernel()->getContainer()->get("form.factory");
+
+        $form = $factory->create(UserType::class);
 
         $user = new User();
         $user->setUsername($formData["username"]);
